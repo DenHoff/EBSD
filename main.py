@@ -13,7 +13,7 @@ if __name__ == '__main__':
     num_sellers: int
     num_sellers = 100000
     time_steps: int
-    time_steps = 500
+    time_steps = 800
     p_max: float
     p_max = 4
     gamma: float
@@ -125,52 +125,6 @@ if __name__ == '__main__':
                         r = random.choice([random_b - 1, next_rightS])
                         network[r].set_capital(network[r].get_capital() +
                                                network[r].get_fixed_price() * network[random_b].get_num_buyers())
-
-        """# generate list of all live sellers and buyers
-        live_Sellers = []
-        live_Buyers = []
-
-        for j in range(0, n):
-            if j % 2 == 0 and network[j].get_vacant() == 0:
-                live_Sellers.append(j)
-            elif j % 2 == 1 and network[j].get_num_buyers() > 0:
-                live_Buyers.append(j)
-
-        # N iterations of randomly selecting 1 buyer and 1 seller
-        for k in range(0, num_sellers):
-            # randomly choose seller to pay overhead of 2
-            random_s = random.choice(live_Sellers)
-            network[random_s].set_capital(network[random_s].get_capital() - 2)
-
-            # randomly choose buyer to buy from cheaper adjacent seller
-            # last buyer in network is connected to seller at index 0
-            random_b = random.choice(live_Buyers)
-            if random_b == n - 1:
-                next_rightS = 0
-            else:
-                next_rightS = random_b + 1
-            # seller at random_b-1 dead - buy from seller random_b+1 if alive
-            if network[random_b - 1].get_vacant() == 1 and network[next_rightS].get_vacant() == 0:
-                network[next_rightS].set_capital(network[next_rightS].get_capital() +
-                                                 network[next_rightS].get_fixed_price() * network[random_b].get_num_buyers())
-            # seller at random_b-1 alive - go to cheaper seller
-            elif network[random_b - 1].get_vacant() == 0:
-                if network[next_rightS].get_vacant() == 1:
-                    network[random_b - 1].set_capital(network[random_b - 1].get_capital() +
-                                               network[random_b - 1].get_fixed_price() * network[random_b].get_num_buyers())
-                elif network[next_rightS].get_vacant() == 0:
-                    if network[random_b - 1].get_fixed_price() < network[next_rightS].get_fixed_price():
-                        network[random_b - 1].set_capital(network[random_b - 1].get_capital() +
-                                                   network[random_b - 1].get_fixed_price() * network[random_b].get_num_buyers())
-                    elif network[next_rightS].get_fixed_price() < network[random_b - 1].get_fixed_price():
-                        network[next_rightS].set_capital(network[next_rightS].get_capital() +
-                                                         network[next_rightS].get_fixed_price() * network[random_b].get_num_buyers())
-                    else:
-                        # if two sellers charge same price random purchase decision
-                        r: int
-                        r = random.choice([random_b - 1, next_rightS])
-                        network[r].set_capital(network[r].get_capital() +
-                                               network[r].get_fixed_price() * network[k].get_num_buyers())"""
 
         # sellers with negative capital become bankrupt
         step = 0
@@ -379,12 +333,13 @@ if __name__ == '__main__':
         mean_price.append(np.nanmean(seller_price[a]))
 
     fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-    time = np.arange(time_steps)
+    time = np.arange(time_steps+1-100)
     #fig4.suptitle('Mean price and capital of live sellers in time')
-    ax1.plot(frac_live_bRS[1:])
+    ax1.plot(frac_live_bRS[100:])
     ax1.set(ylabel='Fraction alive')
-    ax2.plot(time, mean_price[1:])
+    ax2.plot(time, mean_price[100:])
     ax2.set(ylabel='Mean price')
-    ax3.plot(time, mean_capital[1:])
+    ax3.plot(time, mean_capital[100:])
     ax3.set(xlabel='Time', ylabel='Mean capital')
+    fig4.savefig("Seller_params_osc.pdf")
     fig4.show()
