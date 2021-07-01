@@ -11,9 +11,9 @@ if __name__ == '__main__':
 
     # --------   INPUT VARIABLES   --------
     num_sellers: int
-    num_sellers = 100000
+    num_sellers = 1000
     time_steps: int
-    time_steps = 1500
+    time_steps = 250
     p_max: float
     p_max = 4
     gamma: float
@@ -236,17 +236,6 @@ if __name__ == '__main__':
 
     # --------   PLOTTING   --------
 
-    # --- Prices of sellers in time ---
-    """fig = plt.figure()
-    plt.imshow(priceS, extent=[0, num_sellers, 0, time_steps], cmap="turbo", vmin=0, vmax=np.amax(priceS))
-    plt.title("Prices of seller sites in time")
-    plt.ylabel("Time")
-    plt.xlabel("Position")
-    plt.colorbar(label="Price")
-    plt.clim(1.0, np.amax(priceS))
-    fig.savefig("Prices_in_time.pdf")
-    fig.show()"""
-
     # --- Number of sellers vs. price at fixed t ---
     """fig1 = plt.figure()
     widths = [1]
@@ -318,20 +307,35 @@ if __name__ == '__main__':
     fig3.savefig("Frac_liveS_in_time.pdf")
     fig3.show()"""
 
-    # --- mean price and capital of live sellers in time ---
     seller_price = np.array(priceS.copy())
+    seller_price_aR = np.array(priceS.copy())
     seller_capital = np.array(capitalS.copy())
 
     mean_capital = []
     mean_price = []
     for a in range(0, time_steps + 1):
         deadS = np.where(np.array(vacancy_befRebS[a]) == 1)
+        deadS_aR = np.where(np.array(vacancy_afterRebS[a]) == 1)
         for b in range(len(deadS)):
             seller_capital[a, deadS[b]] = np.nan
             seller_price[a, deadS[b]] = np.nan
+            seller_price_aR[a, deadS_aR[b]] = np.nan
         mean_capital.append(np.nanmean(seller_capital[a]))
         mean_price.append(np.nanmean(seller_price[a]))
 
+    # --- Prices of sellers in time ---
+    fig = plt.figure()
+    current_cmap = matplotlib.cm.get_cmap("jet").copy()
+    current_cmap.set_bad(color='white')
+    plt.pcolormesh(seller_price_aR, cmap=current_cmap, rasterized=True)
+    plt.title("Prices of seller sites in time")
+    plt.ylabel("Time")
+    plt.xlabel("Position")
+    plt.colorbar(label="Price")
+    fig.savefig("Prices_in_time.pdf")
+    fig.show()
+
+    # --- mean properties of live sellers in time ---
     fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
     time = np.arange(time_steps)
     #fig4.suptitle('Mean price and capital of live sellers in time')
