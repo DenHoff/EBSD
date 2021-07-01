@@ -13,7 +13,7 @@ if __name__ == '__main__':
     num_sellers: int
     num_sellers = 100000
     time_steps: int
-    time_steps = 800
+    time_steps = 1500
     p_max: float
     p_max = 4
     gamma: float
@@ -333,13 +333,13 @@ if __name__ == '__main__':
         mean_price.append(np.nanmean(seller_price[a]))
 
     fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-    time = np.arange(time_steps+1-100)
+    time = np.arange(time_steps)
     #fig4.suptitle('Mean price and capital of live sellers in time')
-    ax1.plot(frac_live_bRS[100:])
+    ax1.plot(frac_live_bRS[1:])
     ax1.set(ylabel='Fraction alive')
-    ax2.plot(time, mean_price[100:])
+    ax2.plot(time, mean_price[1:])
     ax2.set(ylabel='Mean price')
-    ax3.plot(time, mean_capital[100:])
+    ax3.plot(time, mean_capital[1:])
     ax3.set(xlabel='Time', ylabel='Mean capital')
     fig4.savefig("Seller_params_osc.pdf")
     fig4.show()
