@@ -3,17 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors
 
-
 from Buyer import Buyer
 from Seller import Seller
+from Plot import *
 
 if __name__ == '__main__':
 
     # --------   INPUT VARIABLES   --------
     num_sellers: int
-    num_sellers = 1000
+    num_sellers = 100
     time_steps: int
-    time_steps = 250
+    time_steps = 50
     p_max: float
     p_max = 4
     gamma: float
@@ -131,7 +131,6 @@ if __name__ == '__main__':
         for l in range(0, n, 2):
             if network[l].get_capital() < 0:
                 network[l].set_vacant(1)
-                network[l].set_fixed_price(0)
                 vacancy_befRebS[i+1][step] = network[l].get_vacant()
                 # print("seller at " + str(l) + " bankrupt " + str(network[l].get_vacant()))
 
@@ -179,65 +178,88 @@ if __name__ == '__main__':
         frac_live_aRS[i + 1] = vacancy_afterRebS[i + 1].count(0) / num_sellers
         # print("fraction live sellers (b//a): " + str(frac_live_bRS[i + 1]) + " // " + str(frac_live_aRS[i]))
 
-    print("mean = " + str(np.mean(frac_live_bRS[1:])) + " // " + str(np.mean(frac_live_aRS[1:])))
+    # print("mean = " + str(np.mean(frac_live_bRS[1:])) + " // " + str(np.mean(frac_live_aRS[1:])))
 
     # --------   WRITE DATA IN FILES   --------
-
     import csv
 
-    with open('config.csv', 'w') as file:
+    with open('data/config.csv', 'w') as file:
         writer = csv.writer(file, delimiter='\t')
         writer.writerow(["num_sellers", "time_steps", "p_max", "gamma", "delta", "seed"])
         writer.writerow([num_sellers, time_steps, p_max, gamma, delta, seed])
 
-    r: int
-    r = -1
+    if num_sellers <= 100:
 
-    with open('Capital.csv', 'w') as file:
-        writer = csv.writer(file, delimiter='\t')
-        for row in capitalS:
-            writer.writerow([r, ' '.join([str(a) for a in row])])
-            r += 1
+        r: int
+        r = -1
 
-    r = -1
+        with open('data/Capital.csv', 'w') as file:
+            writer = csv.writer(file, delimiter='\t')
+            for row in capitalS:
+                writer.writerow([r, ' '.join([str(a) for a in row])])
+                r += 1
 
-    with open('Price.csv', 'w') as file:
-        writer = csv.writer(file, delimiter='\t')
-        for row in priceS:
-            writer.writerow([r, ' '.join([str(a) for a in row])])
-            r += 1
+        r = -1
 
-    r = -1
+        with open('data/Price.csv', 'w') as file:
+            writer = csv.writer(file, delimiter='\t')
+            for row in priceS:
+                writer.writerow([r, ' '.join([str(a) for a in row])])
+                r += 1
 
-    with open('Vacancy_bef_reb.csv', 'w') as file:
-        writer = csv.writer(file, delimiter='\t')
-        for row in vacancy_befRebS:
-            writer.writerow([r, ' '.join([str(a) for a in row])])
-            r += 1
+        r = -1
 
-    r = -1
+        with open('data/Vacancy_bef_reb.csv', 'w') as file:
+            writer = csv.writer(file, delimiter='\t')
+            for row in vacancy_befRebS:
+                writer.writerow([r, ' '.join([str(a) for a in row])])
+                r += 1
 
-    with open('Vacancy_after_reb.csv', 'w') as file:
-        writer = csv.writer(file, delimiter='\t')
-        for row in vacancy_afterRebS:
-            writer.writerow([r, ' '.join([str(a) for a in row])])
-            r += 1
+        r = -1
 
-    r = -1
+        with open('data/Vacancy_after_reb.csv', 'w') as file:
+            writer = csv.writer(file, delimiter='\t')
+            for row in vacancy_afterRebS:
+                writer.writerow([r, ' '.join([str(a) for a in row])])
+                r += 1
 
-    with open('Frac_liveS_bef_reb.csv', 'w') as file:
-        writer = csv.writer(file, delimiter='\t')
-        writer.writerow(["mean", "variance"])
-        writer.writerow([np.mean(frac_live_bRS[1:]), np.var(frac_live_bRS[1:])])
-        writer.writerow([])
-        for column in frac_live_bRS:
-            writer.writerow([r, ''.join([str(a) for a in str(column)])])
-            r += 1
+        r = -1
+
+        with open('data/Frac_liveS_bef_reb.csv', 'w') as file:
+            writer = csv.writer(file, delimiter='\t')
+            writer.writerow(["mean", "variance"])
+            writer.writerow([np.mean(frac_live_bRS[1:]), np.var(frac_live_bRS[1:])])
+            writer.writerow([])
+            for column in frac_live_bRS:
+                writer.writerow([r, ''.join([str(a) for a in str(column)])])
+                r += 1
 
     # --------   PLOTTING   --------
 
+    # --- (1) Prepare datasets ---
+    time = np.arange(time_steps)
+    seller_price = np.array(priceS.copy())
+    seller_price_aR = np.array(priceS.copy())
+    seller_capital = np.array(capitalS.copy())
+
+    mean_capital = []
+    mean_price = []
+    for a in range(0, time_steps + 1):
+        deadS = np.where(np.array(vacancy_befRebS[a]) == 1)
+        deadS_aR = np.where(np.array(vacancy_afterRebS[a]) == 1)
+        for b in range(len(deadS)):
+            seller_capital[a, deadS[b]] = np.nan
+            seller_price[a, deadS[b]] = np.nan
+            seller_price_aR[a, deadS_aR[b]] = np.nan
+        mean_capital.append(np.nanmean(seller_capital[a]))
+        mean_price.append(np.nanmean(seller_price[a]))
+
+    fig = Plot()
+    # --- PLOT: Prices of sellers in time ---
+    fig.Fig1(seller_price_aR, np.array([]), np.array([]))
+
     # --- Number of sellers vs. price at fixed t ---
-    """fig1 = plt.figure()
+    fig1 = plt.figure()
     widths = [1]
     heights = [1, 3, 3]
     gs = fig1.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths,
@@ -246,7 +268,7 @@ if __name__ == '__main__':
     final = fig1.add_subplot(gs[2, 0])
     plots = [init, final]
     init.hist(priceS[0], alpha=1, bins=100, color='navy', linewidth=0.8)
-    final.hist(priceS[-1], alpha=1, bins=100, color='navy', linewidth=0.8)
+    final.hist(seller_price_aR[-1], alpha=1, bins=100, color='navy', linewidth=0.8)
 
     for plot in plots:
         plot.set_xlim(1, p_max)
@@ -271,7 +293,7 @@ if __name__ == '__main__':
 
     title.text(0, 1., st, fontsize=14, verticalalignment='top', horizontalalignment='left')
     fig1.savefig("Price_distribution.pdf")
-    fig1.show()"""
+    fig1.show()
 
     # --- Vacancy of seller sites in time ---
 
@@ -295,55 +317,15 @@ if __name__ == '__main__':
     fig5.savefig("VacancyS_in_time.pdf")
     fig5.show()"""
 
-    # --- Fraction of live seller sites in time ---
-    """fig3 = plt.figure()
-    plt.title("Fraction of live sellers in time")
-    plt.ylabel("Fraction of live sellers (before rebirth)")
-    plt.xlabel("Time")
-    plt.plot(frac_live_bRS[1:])
-    plt.axes([0.6, 0.55, 0.25, 0.25])
-    plt.plot(frac_live_aRS[1:], color='orange')
-    plt.title('after rebirth')
-    fig3.savefig("Frac_liveS_in_time.pdf")
-    fig3.show()"""
-
-    seller_price = np.array(priceS.copy())
-    seller_price_aR = np.array(priceS.copy())
-    seller_capital = np.array(capitalS.copy())
-
-    mean_capital = []
-    mean_price = []
-    for a in range(0, time_steps + 1):
-        deadS = np.where(np.array(vacancy_befRebS[a]) == 1)
-        deadS_aR = np.where(np.array(vacancy_afterRebS[a]) == 1)
-        for b in range(len(deadS)):
-            seller_capital[a, deadS[b]] = np.nan
-            seller_price[a, deadS[b]] = np.nan
-            seller_price_aR[a, deadS_aR[b]] = np.nan
-        mean_capital.append(np.nanmean(seller_capital[a]))
-        mean_price.append(np.nanmean(seller_price[a]))
-
     # --- Prices of sellers in time ---
-    fig = plt.figure()
-    current_cmap = matplotlib.cm.get_cmap("jet").copy()
-    current_cmap.set_bad(color='white')
-    plt.pcolormesh(seller_price_aR, cmap=current_cmap, rasterized=True)
-    plt.title("Prices of seller sites in time")
-    plt.ylabel("Time")
-    plt.xlabel("Position")
-    plt.colorbar(label="Price")
-    fig.savefig("Prices_in_time.pdf")
-    fig.show()
 
     # --- mean properties of live sellers in time ---
-    fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-    time = np.arange(time_steps)
-    #fig4.suptitle('Mean price and capital of live sellers in time')
+    fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex='all')
     ax1.plot(frac_live_bRS[1:])
     ax1.set(ylabel='Fraction alive')
     ax2.plot(time, mean_price[1:])
     ax2.set(ylabel='Mean price')
     ax3.plot(time, mean_capital[1:])
     ax3.set(xlabel='Time', ylabel='Mean capital')
-    fig4.savefig("Seller_params_osc.pdf")
+    fig4.savefig("Seller_params_bR_osc.pdf")
     fig4.show()

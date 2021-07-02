@@ -9,22 +9,12 @@ class Plot:
 
     # colour map: agent properties in time
     def Fig1(self, sellerP, numB, capital):
-        if sellerP != 0:
+        if sellerP.any() != 0:
             fig = plt.figure()
-            # plt.imshow(sellerP, cmap='turbo')
-            plt.pcolormesh(sellerP, cmap='jet')
-            """boundaries = np.arange(0, p_max, .1)
-            cmap_reds = plt.cm.get_cmap('turbo', len(boundaries))
-            colors = list(cmap_reds(np.arange(len(boundaries))))
-            for i in range(0, 10):
-                colors[i] = "white"
-            cmap = matplotlib.colors.ListedColormap(colors[:-1], "")
-            cmap.set_over(colors[-1])
-
-            cm = plt.pcolormesh(sellerP, cmap=cmap,
-                                norm=matplotlib.colors.BoundaryNorm(boundaries, ncolors=len(boundaries) - 1, clip=False))
-            """
-            plt.title("Prices of seller sites in time")
+            current_cmap = matplotlib.cm.get_cmap("jet").copy()
+            current_cmap.set_bad(color='white')
+            plt.pcolormesh(sellerP, cmap=current_cmap, rasterized=True)
+            plt.title("Prices of seller sites after rebirth in time")
             plt.ylabel("Time")
             plt.xlabel("Position")
             color_bar = plt.colorbar(label="Price")
@@ -32,7 +22,7 @@ class Plot:
             fig.savefig("data/Prices_in_time.pdf")
             fig.show()
 
-        if numB != 0:
+        if numB.any() != 0:
             fig = plt.figure()
             plt.imshow(numB, cmap='turbo', vmin=0, vmax=np.amax(numB))
             plt.title("Number of buyers at buyer sites in time")
@@ -42,7 +32,7 @@ class Plot:
             fig.savefig("data/NumB_in_time.pdf")
             fig.show()
 
-        if capital != 0:
+        if capital.any() != 0:
             fig = plt.figure()
             plt.imshow(capital, cmap='turbo')
             plt.title("Capital of seller sites in time")
