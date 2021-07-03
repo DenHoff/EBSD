@@ -11,9 +11,9 @@ if __name__ == '__main__':
 
     # --------   INPUT VARIABLES   --------
     num_sellers: int
-    num_sellers = 10000
+    num_sellers = 5000
     time_steps: int
-    time_steps = 500
+    time_steps = 300
     p_max: float
     p_max = 4
     gamma: float
@@ -166,156 +166,150 @@ if __name__ == '__main__':
             vacancy_afterRebS[i+1][step] = network[l].get_vacant()
             step += 1
 
-            # buyer relocation when both neighbouring sellers dead
-            # relocation with probability beta
+        # buyer relocation when both neighbouring sellers dead
+        # relocation with probability beta
 
-            if mode == "reenter" or mode == "empty":
-                if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
+        if mode == "reenter" or mode == "empty":
+            if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
+                relocation_possible = []
+                to_relocate = []
+                m = 1
+                # generate lists with buyers to relocate and possible relocation sites
+                for m in range(1, n, 2):
+                    if m == n - 1:
+                        next_rightS = 0
+                    else:
+                        next_rightS = m + 1
+                    if network[m].get_num_buyers() > 0 and network[m - 1].get_vacant() == 1 and network[next_rightS].get_vacant() == 1:
+                        to_relocate.append(m)
+                    else:
+                        if mode == "reenter":
+                            relocation_possible.append(m)
+                        elif mode == "empty" and network[m].get_num_buyers() > 0:
+                            relocation_possible.append(m)
+
+                # loop through list to_relocate and relocate buyers
+                for a in range(len(to_relocate)):
+                    numB_to_reloc = network[to_relocate[a]].get_num_buyers()
+                    for b in range(0, numB_to_reloc):
+                        network[to_relocate[a]].set_num_buyers(network[to_relocate[a]].get_num_buyers() - 1)
+                        r = random.choice(relocation_possible)
+                        network[r].set_num_buyers(network[r].get_num_buyers() + 1)
+
+        elif mode == "local":
+            if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
+                relocation_possible = []
+                to_relocate = []
+                # generate lists with buyers to relocate and possible relocation sites
+                for m in range(1, n, 2):
+                    if m == n - 1:
+                        nextS = 0
+                    else:
+                        nextS = m + 1
+                    if network[m].get_num_buyers() > 0 and network[m - 1].get_vacant() == 1 and network[nextS].get_vacant() == 1:
+                        # print("buyer at " + str(m) + " has to relocate")
+                        to_relocate.append(m)
+
+                for a in range(len(to_relocate)):
+                    reloc_found = False
+                    b = to_relocate[a] + 2
+                    jump_bound_left = False
+                    jump_bound_right = False
+                    while b < n and not reloc_found:
+                        if b == n - 1:
+                            nextS = 0
+                        else:
+                            nextS = b + 1
+                        if network[b - 1].get_vacant() != 1 or network[nextS].get_vacant() != 1:
+                            # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(b))
+                            reloc_found = True
+                            next_right = b
+                            # print(next_right)
+                        b += 2
+                    if not reloc_found:
+                        # print("no right relocation spot found for " + str(to_relocate[a]))
+                        s = 1
+                        while s < to_relocate[a] and not reloc_found:
+                            if not reloc_found and (network[s - 1].get_vacant() != 1 or network[s + 1].get_vacant() != 1):
+                                # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(s))
+                                reloc_found = True
+                                jump_bound_right = True
+                                next_right = s
+                            s += 2
+
+                    reloc_found = False
+                    c = to_relocate[a] - 2
+                    while c > 0 and not reloc_found:
+                        if network[c - 1].get_vacant() != 1 or network[c + 1].get_vacant() != 1:
+                            # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(c))
+                            reloc_found = True
+                            next_left = c
+                            # print(next_left)
+                        c -= 2
+                    if not reloc_found:
+                        # print("no left relocation spot found for " + str(to_relocate[a]))
+                        s = n - 1
+                        while s > to_relocate[a] and not reloc_found:
+                            if not reloc_found and (network[s - 1].get_vacant() != 1 or network[s + 1].get_vacant() != 1):
+                                # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(s))
+                                reloc_found = True
+                                jump_bound_left = True
+                                next_left = s
+                            s -= 2
+
+                    if jump_bound_right:
+                        dist_right = n - to_relocate[a] + next_right
+                    else:
+                        dist_right = next_right - to_relocate[a]
+                    if jump_bound_left:
+                        dist_left = n - to_relocate[a] - next_left
+                    else:
+                        dist_left = to_relocate[a] - next_left
+
+                    if dist_right > dist_left:
+                        relocation_possible.append(next_left)
+                    elif dist_left > dist_right:
+                        relocation_possible.append(next_right)
+                    else:
+                        r = random.choice([next_left, next_right])
+                        relocation_possible.append(r)
+
+                # loop through list to_relocate and relocate buyers
+                for a in range(len(to_relocate)):
+                    numB_to_reloc = network[to_relocate[a]].get_num_buyers()
+                    for b in range(0, numB_to_reloc):
+                        network[to_relocate[a]].set_num_buyers(network[to_relocate[a]].get_num_buyers() - 1)
+                        network[relocation_possible[a]].set_num_buyers(network[relocation_possible[a]].get_num_buyers() + 1)
+
+        elif mode == "price":
+            if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
+                for a in range(1, n, 2):
                     relocation_possible = []
-                    to_relocate = []
-                    m = 1
-                    # generate lists with buyers to relocate and possible relocation sites
-                    for m in range(1, n, 2):
-                        if m == n - 1:
-                            next_rightS = 0
-                        else:
-                            next_rightS = m + 1
-                        if network[m].get_num_buyers() > 0 and network[m - 1].get_vacant() == 1 and network[
-                            next_rightS].get_vacant() == 1:
-                            to_relocate.append(m)
-                        else:
-                            if mode == "reenter":
-                                relocation_possible.append(m)
-                            elif mode == "empty" and network[m].get_num_buyers() > 0:
-                                relocation_possible.append(m)
-
-                    # loop through list to_relocate and relocate buyers
-                    for a in range(len(to_relocate)):
-                        numB_to_reloc = network[to_relocate[a]].get_num_buyers()
-                        for b in range(0, numB_to_reloc):
-                            network[to_relocate[a]].set_num_buyers(network[to_relocate[a]].get_num_buyers() - 1)
+                    # check whether buyer has to relocate
+                    if a == n - 1:
+                        nextS = 0
+                    else:
+                        nextS = a + 1
+                    if network[a].get_num_buyers() > 0 and network[a - 1].get_vacant() == 1 and network[nextS].get_vacant() == 1:
+                        p_lowest = min(network[a - 1].get_fixed_price(), network[nextS].get_fixed_price()) - tolerance
+                        p_highest = min(network[a - 1].get_fixed_price(), network[nextS].get_fixed_price()) + tolerance
+                        # find all sellers that fit into tolerance range
+                        for b in range(0, n, 2):
+                            if network[b].get_vacant() == 0 and p_lowest <= network[b].get_fixed_price() <= p_highest:
+                                relocation_possible.append(b)
+                        # print("buyer at " + str(a) + " to relocate to " + str(relocation_possible))
+                        # relocate buyers
+                        numB_to_reloc = network[a].get_num_buyers()
+                        for c in range(0, numB_to_reloc):
                             r = random.choice(relocation_possible)
-                            network[r].set_num_buyers(network[r].get_num_buyers() + 1)
-
-            elif mode == "local":
-                if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
-                    relocation_possible = []
-                    to_relocate = []
-                    # generate lists with buyers to relocate and possible relocation sites
-                    for m in range(1, n, 2):
-                        if m == n - 1:
-                            nextS = 0
-                        else:
-                            nextS = m + 1
-                        if network[m].get_num_buyers() > 0 and network[m - 1].get_vacant() == 1 and network[nextS].get_vacant() == 1:
-                            # print("buyer at " + str(m) + " has to relocate")
-                            to_relocate.append(m)
-
-                    for a in range(len(to_relocate)):
-                        reloc_found = False
-                        b = to_relocate[a] + 2
-                        jump_bound_left = False
-                        jump_bound_right = False
-                        while b < n and not reloc_found:
-                            if b == n - 1:
-                                nextS = 0
+                            if r != 0:
+                                left_r = r - 1
                             else:
-                                nextS = b + 1
-                            if network[b - 1].get_vacant() != 1 or network[nextS].get_vacant() != 1:
-                                # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(b))
-                                reloc_found = True
-                                next_right = b
-                                # print(next_right)
-                            b += 2
-                        if not reloc_found:
-                            # print("no right relocation spot found for " + str(to_relocate[a]))
-                            s = 1
-                            while s < to_relocate[a] and not reloc_found:
-                                if not reloc_found and (
-                                        network[s - 1].get_vacant() != 1 or network[s + 1].get_vacant() != 1):
-                                    # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(s))
-                                    reloc_found = True
-                                    jump_bound_right = True
-                                    next_right = s
-                                s += 2
-
-                        reloc_found = False
-                        c = to_relocate[a] - 2
-                        while c > 0 and not reloc_found:
-                            if network[c - 1].get_vacant() != 1 or network[c + 1].get_vacant() != 1:
-                                # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(c))
-                                reloc_found = True
-                                next_left = c
-                                # print(next_left)
-                            c -= 2
-                        if not reloc_found:
-                            # print("no left relocation spot found for " + str(to_relocate[a]))
-                            s = n - 1
-                            while s > to_relocate[a] and not reloc_found:
-                                if not reloc_found and (
-                                        network[s - 1].get_vacant() != 1 or network[s + 1].get_vacant() != 1):
-                                    # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(s))
-                                    reloc_found = True
-                                    jump_bound_left = True
-                                    next_left = s
-                                s -= 2
-
-                        if jump_bound_right:
-                            dist_right = n - to_relocate[a] + next_right
-                        else:
-                            dist_right = next_right - to_relocate[a]
-                        if jump_bound_left:
-                            dist_left = n - to_relocate[a] - next_left
-                        else:
-                            dist_left = to_relocate[a] - next_left
-
-                        if dist_right > dist_left:
-                            relocation_possible.append(next_left)
-                        elif dist_left > dist_right:
-                            relocation_possible.append(next_right)
-                        else:
-                            r = random.choice([next_left, next_right])
-                            relocation_possible.append(r)
-
-                    # loop through list to_relocate and relocate buyers
-                    for a in range(len(to_relocate)):
-                        numB_to_reloc = network[to_relocate[a]].get_num_buyers()
-                        for b in range(0, numB_to_reloc):
-                            network[to_relocate[a]].set_num_buyers(network[to_relocate[a]].get_num_buyers() - 1)
-                            network[relocation_possible[a]].set_num_buyers(
-                                network[relocation_possible[a]].get_num_buyers() + 1)
-
-            elif mode == "price":
-                if beta != 0.0 and random.uniform(0.0, 1.0) < beta:
-                    for a in range(1, n, 2):
-                        relocation_possible = []
-                        # check whether buyer has to relocate
-                        if a == n - 1:
-                            nextS = 0
-                        else:
-                            nextS = a + 1
-                        if network[a].get_num_buyers() > 0 and network[a - 1].get_vacant() == 1 and network[nextS].get_vacant() == 1:
-                            p_lowest = min(network[a - 1].get_fixed_price(),
-                                           network[nextS].get_fixed_price()) - tolerance
-                            p_highest = min(network[a - 1].get_fixed_price(),
-                                            network[nextS].get_fixed_price()) + tolerance
-                            # find all sellers that fit into tolerance range
-                            for b in range(0, n, 2):
-                                if network[b].get_vacant() == 0 and p_lowest <= network[b].get_fixed_price() <= p_highest:
-                                    relocation_possible.append(b)
-                            # print("buyer at " + str(a) + " to relocate to " + str(relocation_possible))
-                            # relocate buyers
-                            numB_to_reloc = network[a].get_num_buyers()
-                            for c in range(0, numB_to_reloc):
-                                r = random.choice(relocation_possible)
-                                if r != 0:
-                                    left_r = r - 1
-                                else:
-                                    left_r = n - 1
-                                right_r = r + 1
-                                new_siteB = random.choice([left_r, right_r])
-                                network[a].set_num_buyers(network[a].get_num_buyers() - 1)
-                                network[new_siteB].set_num_buyers(network[new_siteB].get_num_buyers() + 1)
+                                left_r = n - 1
+                            right_r = r + 1
+                            new_siteB = random.choice([left_r, right_r])
+                            network[a].set_num_buyers(network[a].get_num_buyers() - 1)
+                            network[new_siteB].set_num_buyers(network[new_siteB].get_num_buyers() + 1)
 
         # --------   STORE DATA IN DATASETS   --------
         step = 0
