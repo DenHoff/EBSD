@@ -22,9 +22,9 @@ class Plot:
             fig.savefig("data/Prices_in_time.pdf")
             fig.show()
 
-        if numB.any() != 0:
+        if numB != 0:
             fig = plt.figure()
-            plt.imshow(numB, cmap='turbo', vmin=0, vmax=np.amax(numB))
+            plt.pcolormesh(numB, cmap='jet', rasterized=True)
             plt.title("Number of buyers at buyer sites in time")
             plt.ylabel("Time")
             plt.xlabel("Position")
@@ -34,7 +34,7 @@ class Plot:
 
         if capital.any() != 0:
             fig = plt.figure()
-            plt.imshow(capital, cmap='turbo')
+            plt.pcolormesh(capital, cmap='jet', rasterized=True)
             plt.title("Capital of seller sites in time")
             plt.ylabel("Time")
             plt.xlabel("Position")
