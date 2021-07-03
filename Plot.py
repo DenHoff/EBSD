@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import numpy as np
+import seaborn as sb
+import math
 
 
 class Plot:
@@ -14,7 +16,7 @@ class Plot:
             current_cmap = matplotlib.cm.get_cmap("jet").copy()
             current_cmap.set_bad(color='white')
             plt.pcolormesh(sellerP, cmap=current_cmap, rasterized=True)
-            plt.title("Prices of seller sites after rebirth in time")
+            plt.title("Prices of seller sites in time (after rebirth)")
             plt.ylabel("Time")
             plt.xlabel("Position")
             color_bar = plt.colorbar(label="Price")
@@ -25,17 +27,20 @@ class Plot:
         if numB != 0:
             fig = plt.figure()
             plt.pcolormesh(numB, cmap='jet', rasterized=True)
-            plt.title("Number of buyers at buyer sites in time")
+            plt.title("Number of buyers at buyer sites in time (after relocation)")
             plt.ylabel("Time")
             plt.xlabel("Position")
-            plt.colorbar(label="Counts")
+            color_bar = plt.colorbar(label="Counts")
+            color_bar.minorticks_on()
             fig.savefig("data/NumB_in_time.pdf")
             fig.show()
 
         if capital.any() != 0:
             fig = plt.figure()
-            plt.pcolormesh(capital, cmap='jet', rasterized=True)
-            plt.title("Capital of seller sites in time")
+            current_cmap = matplotlib.cm.get_cmap("turbo").copy()
+            current_cmap.set_bad(color='white')
+            plt.pcolormesh(capital, cmap=current_cmap, rasterized=True)
+            plt.title("Capital of seller sites in time (after rebirth)")
             plt.ylabel("Time")
             plt.xlabel("Position")
             color_bar = plt.colorbar(label="Capital")
@@ -111,3 +116,38 @@ class Plot:
         plt.title('after rebirth')
         fig.savefig("data/VacancyS_in_time.pdf")
         fig.show()
+
+    def Fig5(self, time, frac_live_bRS, mean_price, mean_capital):
+        fig, (ax1, ax2, ax3) = plt.subplots(3, sharex='all')
+        ax1.plot(frac_live_bRS[1:])
+        ax1.set(ylabel='Fraction alive')
+        ax2.plot(time, mean_price[1:])
+        ax2.set(ylabel='Mean price')
+        ax3.plot(time, mean_capital[1:])
+        ax3.set(xlabel='Time', ylabel='Mean capital')
+        fig.savefig("data/Seller_params_bR_osc.pdf")
+        fig.show()
+
+    def Fig6(self, t, frac_liveS, num_sellers, num_liveB):
+        # constant multiplication over list
+        num_liveS = [x * num_sellers for x in frac_liveS]
+
+        fig = plt.figure()
+        plt.plot(t, num_liveS[:], marker='o', color='navy', label='sellers')
+        plt.plot(t, num_liveB[:], marker='o', color='orange', label='buyers')
+        plt.legend(loc='best')
+        plt.title("Number of live agents at end of round in time")
+        plt.xlabel("Time")
+        plt.ylabel("Counts")
+        plt.grid(alpha=0.3)
+        fig.savefig("data/Number_alive.pdf")
+        fig.show()
+
+    def Fig7(self, priceS, bins):
+        #bins = math.ceil((np.nanmax(priceS) - np.nanmin(priceS)) / np.sqrt(2))
+        plt.figure()
+        plt.hist(priceS, bins=bins, alpha=0.3)
+        plt.xlabel("Price")
+        sb.kdeplot(priceS, bw_method=0.1, fill=True)
+        plt.savefig("data/Price_distribution.pdf")
+        plt.show()

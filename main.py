@@ -11,9 +11,9 @@ if __name__ == '__main__':
 
     # --------   INPUT VARIABLES   --------
     num_sellers: int
-    num_sellers = 5000
+    num_sellers = 100
     time_steps: int
-    time_steps = 300
+    time_steps = 150
     p_max: float
     p_max = 4
     gamma: float
@@ -25,9 +25,9 @@ if __name__ == '__main__':
     beta: float
     beta = 1
     mode: str
-    mode = 'local'  # [empty, reenter, local, price]
+    mode = 'reenter'  # [empty, reenter, local, price]
     tolerance: float  # for mode "price"
-    tolerance = 0.2
+    tolerance = 0.1
 
     # --------   CREATE DATASETS   --------
 
@@ -250,7 +250,11 @@ if __name__ == '__main__':
                         # print("no left relocation spot found for " + str(to_relocate[a]))
                         s = n - 1
                         while s > to_relocate[a] and not reloc_found:
-                            if not reloc_found and (network[s - 1].get_vacant() != 1 or network[s + 1].get_vacant() != 1):
+                            if s == n - 1:
+                                nextS = 0
+                            else:
+                                nextS = s + 1
+                            if not reloc_found and (network[s - 1].get_vacant() != 1 or network[nextS].get_vacant() != 1):
                                 # print("found relocation spot for " + str(to_relocate[a]) + ": " + str(s))
                                 reloc_found = True
                                 jump_bound_left = True
@@ -401,9 +405,11 @@ if __name__ == '__main__':
     seller_capital = np.array(capitalS.copy())
     seller_capital_aR = np.array(capitalS.copy())
 
+    num_liveB = []
     mean_capital = []
     mean_price = []
     for a in range(0, time_steps + 1):
+        num_liveB.append(sum(map(lambda z: z > 0, num_buyersB[a])))
         deadS = np.where(np.array(vacancy_befRebS[a]) == 1)
         deadS_aR = np.where(np.array(vacancy_afterRebS[a]) == 1)
         for b in range(len(deadS)):
@@ -416,78 +422,14 @@ if __name__ == '__main__':
 
     fig = Plot()
     # --- PLOT: Prices of sellers in time and space ---
-    fig.Fig1(seller_price_aR, np.array([]), np.array([]))
+    fig.Fig1(seller_price_aR, 0, np.array([]))
     # --- PLOT: Capital of sellers in time and space ---
-    # fig.Fig1(np.array([]), 0, seller_capital_aR)
+    fig.Fig1(np.array([]), 0, seller_capital_aR)
     # --- PLOT: Number of buyers in time and space ---
-    # fig.Fig1(np.array([]), num_buyersB, np.array([]))
-
+    fig.Fig1(np.array([]), num_buyersB, np.array([]))
+    # --- PLOT: mean properties of live sellers in time ---
+    fig.Fig5(time, frac_live_bRS, mean_price, mean_capital)
+    # --- PLOT: Number of live agents in time ---
+    fig.Fig6(np.arange(time_steps+1), frac_live_aRS, num_sellers, num_liveB)
     # --- Number of sellers vs. price at fixed t ---
-    """fig1 = plt.figure()
-    widths = [1]
-    heights = [1, 3, 3]
-    gs = fig1.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths,
-                           height_ratios=heights, hspace=1.0)
-    init = fig1.add_subplot(gs[1, 0])
-    final = fig1.add_subplot(gs[2, 0])
-    plots = [init, final]
-    init.hist(priceS[0], alpha=1, bins=100, color='navy', linewidth=0.8)
-    final.hist(seller_price_aR[-1], alpha=1, bins=100, color='navy', linewidth=0.8)
-
-    for plot in plots:
-        plot.set_xlim(1, p_max)
-        plot.grid(axis='x')
-        plot.set_ylabel('Number of sellers')
-        plot.set_xlabel('Price')
-    init.text(0.01, 1.1, 'Initial distribution', fontsize=10, transform=init.transAxes)
-    final.text(0.01, 1.1, 'Final distribution', fontsize=10, transform=final.transAxes)
-
-    title = fig1.add_subplot(gs[0, 0])
-    title.axis('off')
-    t = "Price distribution"
-
-    st = r'Number of sellers: ' + str(num_sellers) + '\n' + r'Time steps: ' + str(time_steps) + '\n' + \
-         r'$P_{max}$ = ' + str(p_max) + r'; $\gamma$ = ' + str(gamma) + r'; $\Delta$ = ' + str(delta) + \
-         r'; seed = ' + str(seed)
-
-    title.text(0, 1.8, t, fontweight='bold',
-               fontsize=18,
-               verticalalignment='top',
-               horizontalalignment='left')
-
-    title.text(0, 1., st, fontsize=14, verticalalignment='top', horizontalalignment='left')
-    fig1.savefig("Price_distribution.pdf")
-    fig1.show()"""
-
-    # --- Vacancy of seller sites in time ---
-
-    """vac_site_befReb = [0 for i in range(0, time_steps)]
-    vac_site_afterReb = [0 for i in range(0, time_steps)]
-
-    for i in range(0, time_steps):
-        vac_site_befReb[i] = vacancy_befRebS[i+1].count(1)
-        vac_site_afterReb[i] = vacancy_afterRebS[i+1].count(1)
-
-    time = np.arange(time_steps)
-
-    fig5 = plt.figure()
-    plt.title("Number of vacant sites in time")
-    plt.xlabel("Time")
-    plt.ylabel("Number of vacant sites (before rebirth)")
-    plt.plot(time, vac_site_befReb)
-    plt.axes([0.6, 0.2, 0.25, 0.25])  # [left, bottom, width, height]
-    plt.plot(time, vac_site_afterReb, color='orange')
-    plt.title('after rebirth')
-    fig5.savefig("VacancyS_in_time.pdf")
-    fig5.show()"""
-
-    # --- mean properties of live sellers in time ---
-    fig4, (ax1, ax2, ax3) = plt.subplots(3, sharex='all')
-    ax1.plot(frac_live_bRS[1:])
-    ax1.set(ylabel='Fraction alive')
-    ax2.plot(time, mean_price[1:])
-    ax2.set(ylabel='Mean price')
-    ax3.plot(time, mean_capital[1:])
-    ax3.set(xlabel='Time', ylabel='Mean capital')
-    fig4.savefig("Seller_params_bR_osc.pdf")
-    fig4.show()
+    fig.Fig7(seller_price_aR[-1], 50)
